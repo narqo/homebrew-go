@@ -1,0 +1,103 @@
+#!/usr/bin/env ruby
+
+require 'erb'
+require 'tempfile'
+
+$formula_template = <<~EOF
+  require "language/go"
+
+  class <%= klass %> < Formula
+    include Language::Go
+
+    go_resource "<%= name %>" do
+      url "https://<%= name %>.git"
+    end
+
+    depends_on "go" => :build
+
+    def install
+      install_with_gopath
+    end
+
+    def install_with_gopath
+      ENV["GOPATH"] = buildpath
+      ENV["GOBIN"] = bin
+      ENV.prepend_create_path "PATH", buildpath/"bin"
+      stage_deps resources, buildpath/"src"
+
+      cd buildpath/"src/#<%= name %>" do
+        system "go", "install"
+        prefix.install_metafiles
+      end
+    end
+
+    def test
+      false
+    end
+  end
+EOF
+
+module GoInstallerCli
+  module_function
+
+  @usage = <<~EOF
+    brew go install [package]
+    brew go update [package]
+    brew go uninstall [package]
+    brew go formula [package]
+
+    Usage:
+    Manages Go tools using Homebrew formulas.
+  EOF
+
+  def help_msg
+    @usage
+  end
+
+  def process_args(args)
+    abort help_msg unless args[0]
+
+    if args[0] == "help"
+      STDERR.puts help_msg
+      exit 0
+    end
+
+    args[0..1]
+  end
+
+  def expand_formula(name, version)
+    klass           = 'Go' + name.capitalize.gsub(/[-_.\s\/]([a-zA-Z0-9])/) { $1.upcase }.gsub('+', 'x')
+    homebrew_prefix = ENV['HOMEBREW_PREFIX'] || `brew --prefix`.chomp
+    template        = ERB.new($formula_template)
+    template.result(binding)
+  end
+
+  def with_temp_formula(name, version)
+    filename = File.join Dir.tmpdir,"go-#{name.gsub(/[-_.\s\/]([a-zA-Z0-9])/) { $1 }.gsub('+', 'x')}.rb"
+
+    open(filename, 'w') do |f|
+      f.puts expand_formula(name, version)
+    end
+
+    yield filename
+  ensure
+    File.unlink filename
+  end
+
+  def run(args = ARGV)
+    command, package = process_args(args)
+    version = "devel"
+
+    with_temp_formula(package, version) do |filename|
+      case command
+      when "formula"
+        $stdout.puts File.read(filename)
+      else
+        system "brew #{command} #{filename}"
+        exit $?.exitstatus unless $?.success?
+      end
+    end
+  end
+end
+
+GoInstallerCli.run(ARGV)
