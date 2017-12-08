@@ -4,14 +4,44 @@ require 'erb'
 require 'tempfile'
 
 $formula_template = <<~EOF
-  require "language/go"
+  require 'formula'
+  require 'fileutils'
+
+  class GoGetDownloadStrategy < AbstractDownloadStrategy
+    def initialize(name, resource)
+      super
+      @gopath = HOMEBREW_CACHE/cache_filename
+    end
+
+    def fetch
+      ohai "Fetching \#{@url}"
+      go_get_package
+    end
+
+    def stage
+      super
+      cp_r File.join(cached_location, "."), Dir.pwd, preserve: true
+    end
+
+    def cache_filename
+      "\#{@url.gsub(/[.\\/]/, '-')}--gopath"
+    end
+
+    def cached_location
+      @gopath
+    end
+
+    private
+
+    def go_get_package
+      ENV['GOPATH'] = cached_location
+      safe_system "go", "get", "-u", "-d", @url
+    end
+  end
 
   class <%= klass %> < Formula
-    include Language::Go
-
-    go_resource "<%= name %>" do
-      url "https://<%= name %>.git"
-    end
+    url "<%= name %>", :using => GoGetDownloadStrategy
+    version "<%= version %>"
 
     depends_on "go" => :build
 
@@ -23,10 +53,9 @@ $formula_template = <<~EOF
       ENV["GOPATH"] = buildpath
       ENV["GOBIN"] = bin
       ENV.prepend_create_path "PATH", buildpath/"bin"
-      stage_deps resources, buildpath/"src"
 
-      cd buildpath/"src/#<%= name %>" do
-        system "go", "install"
+      cd buildpath/"src/<%= name %>" do
+        system "go", "install", "<%= name %>"
         prefix.install_metafiles
       end
     end
@@ -66,14 +95,13 @@ module GoInstallerCli
   end
 
   def expand_formula(name, version)
-    klass           = 'Go' + name.capitalize.gsub(/[-_.\s\/]([a-zA-Z0-9])/) { $1.upcase }.gsub('+', 'x')
-    homebrew_prefix = ENV['HOMEBREW_PREFIX'] || `brew --prefix`.chomp
+    klass           = 'Go' + name.split("/").last.capitalize.gsub(/[-_.\s]([a-zA-Z0-9])/) { $1.upcase }.gsub('+', 'x')
     template        = ERB.new($formula_template)
     template.result(binding)
   end
 
   def with_temp_formula(name, version)
-    filename = File.join Dir.tmpdir,"go-#{name.gsub(/[-_.\s\/]([a-zA-Z0-9])/) { $1 }.gsub('+', 'x')}.rb"
+    filename = File.join Dir.tmpdir, "go-#{name.split("/").last}.rb"
 
     open(filename, 'w') do |f|
       f.puts expand_formula(name, version)
