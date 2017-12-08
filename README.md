@@ -34,6 +34,10 @@ TODO
 
 TODO
 
+---
+
+The project was deeply inspired by [brew-gem](https://github.com/sportngin/brew-gem).
+
 # License
 
 MIT
