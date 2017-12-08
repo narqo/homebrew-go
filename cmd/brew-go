@@ -71,8 +71,6 @@ module GoInstallerCli
 
   @usage = <<~EOF
     brew go install [package]
-    brew go update [package]
-    brew go uninstall [package]
     brew go formula [package]
 
     Usage:

@@ -3,7 +3,7 @@
 ## Install
 
 ~~~
-% brew install brew-go
+% brew tap narqo/go
 ~~~
 
 ## Usage
@@ -12,16 +12,10 @@
 % brew go install github.com/google/pprof
 ~~~
 
-To update the package:
+To see all supported commands do:
 
 ~~~
-% brew go update github.com/google/pprof
-~~~
-
-To uninstall the package:
-
-~~~
-% brew go uninstall github.com/google/pprof
+% brew go help
 ~~~
 
 ### Limitations
