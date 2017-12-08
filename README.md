@@ -1,5 +1,13 @@
 # brew-go
 
+[![experimental](https://badges.github.io/stability-badges/dist/experimental.svg)](https://github.com/badges/stability-badges)
+
+**WARNING**
+
+This is an experimental project and it can break things.
+
+---
+
 ## Install
 
 ~~~
