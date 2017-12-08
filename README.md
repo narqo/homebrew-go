@@ -18,6 +18,9 @@ This is an experimental project and it can break things.
 
 ~~~
 % brew go install github.com/google/pprof
+...
+% which pprof
+/usr/local/bin/pprof
 ~~~
 
 To see all supported commands do:
