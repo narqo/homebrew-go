@@ -54,7 +54,7 @@ Command generates a temporary brew formula and runs `brew install <formula-file>
 
 ---
 
-* – I'm not a brew internals expert (neither a ruby developer), so I'm not yet sure how the tool aligns with other brew's things. It works with my test cases, let me know if somthing doesn't work with yours ;)
+\* – I'm not a brew internals expert (neither a ruby developer), so I'm not yet sure how the tool aligns with other brew's things. It works with my test cases, let me know if somthing doesn't work with yours ;)
 
 The project was deeply inspired by [brew-gem](https://github.com/sportngin/brew-gem).
 
